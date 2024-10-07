@@ -1,0 +1,6 @@
+/app/.env
+/app/db.sqlite3
+/venv
+/app/app/__pycache__
+/app/user/__pycache__
+/app/user/migrations
