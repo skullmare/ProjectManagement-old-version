@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'channels',
     'user',
+    'projects',
     'rest_framework',
     'djoser',
     'corsheaders',

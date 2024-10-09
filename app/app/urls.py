@@ -19,6 +19,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from user.views import PasswordResetConfirmView, ActivationView
+from projects.views import ProjectListCreateView, ProjectRetrieveUpdateDestroyView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,6 +28,8 @@ urlpatterns = [
     path('password_reset/<uid>/<token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('activate/<uid>/<token>/', ActivationView.as_view(), name='activate'),
     path('api/v1/', include('social_django.urls', namespace='social')),
+    path('projects/', ProjectListCreateView.as_view(), name='project-create'),
+    path('projects/<int:pk>/', ProjectRetrieveUpdateDestroyView.as_view(), name='project-retrieve-update-destroy'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
