@@ -49,6 +49,14 @@ class RiskDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Risk.objects.filter(project_id=project_id)
         raise serializers.ValidationError("У вас недостаточно прав для доступа к риску проекта.")
 
+    def get_object(self):
+        queryset = self.get_queryset()
+        risk_id = self.kwargs['pk']
+        try:
+            return queryset.get(pk=risk_id)
+        except Risk.DoesNotExist:
+            raise serializers.ValidationError("Риск не найден.")
+
     def perform_update(self, serializer):
         user = self.request.user
         project_id = self.kwargs['project_id']

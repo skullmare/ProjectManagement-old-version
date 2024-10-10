@@ -51,6 +51,14 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Task.objects.filter(project_id=project_id)
         raise serializers.ValidationError("У вас недостаточно прав для доступа к задаче проекта.")
 
+    def get_object(self):
+        queryset = self.get_queryset()
+        task_id = self.kwargs['pk']
+        try:
+            return queryset.get(pk=task_id)
+        except Task.DoesNotExist:
+            raise serializers.ValidationError("Задача не найдена.")
+
     def perform_update(self, serializer):
         user = self.request.user
         project_id = self.kwargs['project_id']

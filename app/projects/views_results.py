@@ -49,6 +49,14 @@ class ResultDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Result.objects.filter(project_id=project_id)
         raise serializers.ValidationError("У вас недостаточно прав для доступа к результату проекта.")
 
+    def get_object(self):
+        queryset = self.get_queryset()
+        result_id = self.kwargs['pk']
+        try:
+            return queryset.get(pk=result_id)
+        except Result.DoesNotExist:
+            raise serializers.ValidationError("Результат не найден.")
+
     def perform_update(self, serializer):
         user = self.request.user
         project_id = self.kwargs['project_id']

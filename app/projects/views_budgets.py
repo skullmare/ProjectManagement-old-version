@@ -49,6 +49,14 @@ class BudgetDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Budget.objects.filter(project_id=project_id)
         raise serializers.ValidationError("У вас недостаточно прав для доступа к бюджету проекта.")
 
+    def get_object(self):
+        queryset = self.get_queryset()
+        budget_id = self.kwargs['pk']
+        try:
+            return queryset.get(pk=budget_id)
+        except Budget.DoesNotExist:
+            raise serializers.ValidationError("Бюджет не найден.")
+
     def perform_update(self, serializer):
         user = self.request.user
         project_id = self.kwargs['project_id']

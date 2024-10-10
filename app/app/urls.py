@@ -24,7 +24,7 @@ from projects.views_tasks import TaskDetailView, TaskListCreateView
 from projects.views_budgets import BudgetDetailView, BudgetListCreateView
 from projects.views_results import ResultDetailView, ResultListCreateView
 from projects.views_risks import RiskDetailView, RiskListCreateView
-from projects.views_add import ProjectLeaderViewSet, ProjectParticipantViewSet
+from projects.views_controlRole import ProjectLeaderViewSet, ProjectParticipantViewSet
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('password_reset/<uid>/<token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
@@ -42,8 +42,8 @@ urlpatterns = [
     path('api/v1/projects/<int:project_id>/risks/<int:pk>/', RiskDetailView.as_view(), name='risk-detail'),
     path('api/v1/projects/<int:project_id>/results/', ResultListCreateView.as_view(), name='result-list-create'),
     path('api/v1/projects/<int:project_id>/results/<int:pk>/', ResultDetailView.as_view(), name='result-detail'),
-    path('api/v1/projects/<int:pk>/add_leader/', ProjectLeaderViewSet.as_view({'post': 'add_leader'}), name='add-leader'),
-    path('api/v1/projects/<int:pk>/add_participant/', ProjectParticipantViewSet.as_view({'post': 'add_participant'}), name='add-participant'),
+    path('api/v1/projects/<int:pk>/leader/', ProjectLeaderViewSet.as_view({'post': 'add_leader'}), name='add-leader'),
+    path('api/v1/projects/<int:pk>/participant/', ProjectParticipantViewSet.as_view({'post': 'add_participant'}), name='add-participant'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
