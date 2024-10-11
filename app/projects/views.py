@@ -1,143 +1,128 @@
-from rest_framework import generics
+from rest_framework import generics, permissions
 from .models import Project, Task, Budget, Result, Risk, ProjectMembership
 from .serializers import ProjectSerializer, TaskSerializer, BudgetSerializer, ResultSerializer, RiskSerializer
 from .permissions import IsManager, IsLeader, IsParticipant
 
-class BaseListView(generics.ListAPIView):
-    model = None
-    serializer_class = None
-
-    def get_queryset(self):
-        project_id = self.kwargs['project_id']
-        if self.request.user.is_manager:
-            return self.model.objects.filter(project_id=project_id)
-        elif self.request.user.is_leader:
-            return self.model.objects.filter(project_id=project_id, project__memberships__user=self.request.user)
-        elif self.request.user.is_participant:
-            return self.model.objects.filter(project_id=project_id, project__memberships__user=self.request.user)
-        return self.model.objects.none()
-
-
-class BaseCreateView(generics.CreateAPIView):
-    model = None
-    serializer_class = None
-    permission_classes = [IsLeader]
-
-    def perform_create(self, serializer):
-        project_id = self.kwargs['project_id']
-        project = Project.objects.get(id=project_id)
-        serializer.save(project=project)
-
-
-class BaseDetailView(generics.RetrieveUpdateDestroyAPIView):
-    model = None
-    serializer_class = None
-    permission_classes = [IsLeader]
-
-    def get_queryset(self):
-        return self.model.objects.all()
-
-
 # =====================
 # PROJECT VIEWS
 # =====================
-class ProjectListView(BaseListView):
-    model = Project
+class ProjectListView(generics.ListAPIView):
     serializer_class = ProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        if self.request.user.is_manager:
+            Project.objects.all()
+        return Project.objects.filter(projectmembership__user=self.request.user)
+        
 
-class ProjectCreateView(BaseCreateView):
-    model = Project
-    serializer_class = ProjectSerializer
+# class ProjectCreateView(generics.CreateAPIView):
+#     serializer_class = ProjectSerializer
+#     permission_classes = [permissions.IsAuthenticated, IsLeader]
 
-    def perform_create(self, serializer):
-        project = serializer.save()
-        ProjectMembership.objects.create(user=self.request.user, project=project, role='leader')
+#     def perform_create(self, serializer):
 
+# class ProjectDetailView(generics.RetrieveAPIView):
+#     serializer_class = ProjectSerializer
+#     permission_classes = [permissions.IsAuthenticated, IsManager | IsLeader | IsParticipant]
 
-class ProjectDetailView(BaseDetailView):
-    model = Project
-    serializer_class = ProjectSerializer
-    permission_classes = [IsManager | IsLeader | IsParticipant]
+#     def get_queryset(self):
 
+# class ProjectUpdateView(generics.UpdateAPIView):
+#     serializer_class = ProjectSerializer
+#     permission_classes = [permissions.IsAuthenticated, IsLeader]
 
-class ProjectUpdateView(BaseDetailView):
-    model = Project
-    serializer_class = ProjectSerializer
+#     def get_queryset(self):
 
+# class ProjectDeleteView(generics.DestroyAPIView):
+#     serializer_class = ProjectSerializer
+#     permission_classes = [permissions.IsAuthenticated, IsLeader]
 
-class ProjectDeleteView(BaseDetailView):
-    model = Project
-    serializer_class = ProjectSerializer
-
+#     def get_queryset(self):
 
 # =====================
 # TASK VIEWS
 # =====================
-class TaskListView(BaseListView):
-    model = Task
+class TaskListView(generics.ListAPIView):
     serializer_class = TaskSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        if self.request.user.is_manager:
+            Task.objects.all()
+        return Task.objects.filter(project__projectmembership__user=self.request.user)
 
-class TaskCreateView(BaseCreateView):
-    model = Task
-    serializer_class = TaskSerializer
+# class TaskCreateView(generics.CreateAPIView):
+#     serializer_class = TaskSerializer
+#     permission_classes = [permissions.IsAuthenticated, IsLeader]
 
+#     def perform_create(self, serializer):
 
-class TaskDetailView(BaseDetailView):
-    model = Task
-    serializer_class = TaskSerializer
+# class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = TaskSerializer
+#     permission_classes = [permissions.IsAuthenticated, IsLeader]
 
+#     def get_queryset(self):
 
-# =====================
-# BUDGET VIEWS
-# =====================
-class BudgetListView(BaseListView):
-    model = Budget
-    serializer_class = BudgetSerializer
+# # =====================
+# # BUDGET VIEWS
+# # =====================
+# class BudgetListView(generics.ListAPIView):
+#     serializer_class = BudgetSerializer
+#     permission_classes = [permissions.IsAuthenticated]
 
+#     def get_queryset(self):
 
-class BudgetCreateView(BaseCreateView):
-    model = Budget
-    serializer_class = BudgetSerializer
+# class BudgetCreateView(generics.CreateAPIView):
+#     serializer_class = BudgetSerializer
+#     permission_classes = [permissions.IsAuthenticated, IsLeader]
 
+#     def perform_create(self, serializer):
 
-class BudgetDetailView(BaseDetailView):
-    model = Budget
-    serializer_class = BudgetSerializer
+# class BudgetDetailView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = BudgetSerializer
+#     permission_classes = [permissions.IsAuthenticated, IsLeader]
 
+#     def get_queryset(self):
 
-# =====================
-# RESULT VIEWS
-# =====================
-class ResultListView(BaseListView):
-    model = Result
-    serializer_class = ResultSerializer
+# # =====================
+# # RESULT VIEWS
+# # =====================
+# class ResultListView(generics.ListAPIView):
+#     serializer_class = ResultSerializer
+#     permission_classes = [permissions.IsAuthenticated]
 
+#     def get_queryset(self):
 
-class ResultCreateView(BaseCreateView):
-    model = Result
-    serializer_class = ResultSerializer
+# class ResultCreateView(generics.CreateAPIView):
+#     serializer_class = ResultSerializer
+#     permission_classes = [permissions.IsAuthenticated, IsLeader]
 
+#     def perform_create(self, serializer):
 
-class ResultDetailView(BaseDetailView):
-    model = Result
-    serializer_class = ResultSerializer
+# class ResultDetailView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = ResultSerializer
+#     permission_classes = [permissions.IsAuthenticated, IsLeader]
 
+#     def get_queryset(self):
 
-# =====================
-# RISK VIEWS
-# =====================
-class RiskListView(BaseListView):
-    model = Risk
-    serializer_class = RiskSerializer
+# # =====================
+# # RISK VIEWS
+# # =====================
+# class RiskListView(generics.ListAPIView):
+#     serializer_class = RiskSerializer
+#     permission_classes = [permissions.IsAuthenticated]
 
+#     def get_queryset(self):
 
-class RiskCreateView(BaseCreateView):
-    model = Risk
-    serializer_class = RiskSerializer
+# class RiskCreateView(generics.CreateAPIView):
+#     serializer_class = RiskSerializer
+#     permission_classes = [permissions.IsAuthenticated, IsLeader]
 
+#     def perform_create(self, serializer):
 
-class RiskDetailView(BaseDetailView):
-    model = Risk
-    serializer_class = RiskSerializer
+# class RiskDetailView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = RiskSerializer
+#     permission_classes = [permissions.IsAuthenticated, IsLeader]
+
+#     def get_queryset(self):

@@ -20,8 +20,8 @@ class ProjectMembership(models.Model):
         ('participant', 'Участник'),
     ]
 
-    user = models.ForeignKey(CustomUser, related_name='project_memberships', on_delete=models.CASCADE)
-    project = models.ForeignKey(Project, related_name='memberships', on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
     role = models.CharField(max_length=12, choices=ROLE_CHOICES)
 
     class Meta:
@@ -29,6 +29,7 @@ class ProjectMembership(models.Model):
 
     def __str__(self):
         return f'{self.user} - {self.project} - {self.role}'
+    
 
 
 class Budget(models.Model):
