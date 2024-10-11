@@ -1,50 +1,43 @@
 from rest_framework import serializers
-from .models import Project, Budget, Risk, Result, Task
+from .models import Project, ProjectMembership, Budget, Risk, Result, Task
 from user.models import CustomUser
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'first_name', 'last_name']
+        fields = '__all__'
+
+class ProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = '__all__'
+
+
+class ProjectMembershipSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectMembership
+        fields = '__all__'
+
 
 class BudgetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Budget
-        fields = ['id', 'year', 'amount']
+        fields = '__all__'
+
 
 class RiskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Risk
-        fields = ['id', 'name', 'description']
+        fields = '__all__'
+
 
 class ResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = Result
-        fields = ['id', 'text']
+        fields = '__all__'
+
 
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
-        fields = ['id', 'name', 'description', 'status', 'start_date', 'end_date']
-
-class LeaderSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Project
-        fields = ['leaders']
-
-class ParticipantSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Project
-        fields = ['participants']
-
-class ProjectSerializer(serializers.ModelSerializer):
-    leaders = CustomUserSerializer(many=True, required=False)
-    participants = CustomUserSerializer(many=True, required=False)
-    budgets = BudgetSerializer(many=True, required=False)
-    risks = RiskSerializer(many=True, required=False)
-    results = ResultSerializer(many=True, required=False)
-    tasks = TaskSerializer(many=True, required=False)
-
-    class Meta:
-        model = Project
-        fields = ['id', 'name', 'client', 'curator', 'leaders', 'participants', 'purpose', 'description', 'start_date', 'end_date', 'budgets', 'risks', 'results', 'tasks']
+        fields = '__all__'
