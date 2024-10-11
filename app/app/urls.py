@@ -10,17 +10,17 @@ from projects.views import (
     # ProjectUpdateView,
     # ProjectDeleteView,
     TaskListView,
-    # TaskCreateView,
-    # TaskDetailView,
-    # BudgetListView,
-    # BudgetCreateView,
-    # BudgetDetailView,
-    # ResultListView,
-    # ResultCreateView,
-    # ResultDetailView,
-    # RiskListView,
-    # RiskCreateView,
-    # RiskDetailView,
+    TaskCreateView,
+    TaskDetailView,
+    BudgetListView,
+    BudgetCreateView,
+    BudgetDetailView,
+    ResultListView,
+    ResultCreateView,
+    ResultDetailView,
+    RiskListView,
+    RiskCreateView,
+    RiskDetailView,
 )
 
 urlpatterns = [
@@ -40,23 +40,23 @@ urlpatterns = [
 
     # # URL-ы для управления задачами
     path('api/v1/projects/<int:project_id>/tasks/', TaskListView.as_view(), name='task-list'),  # Список задач
-    # path('api/v1/projects/<int:project_id>/tasks/create/', TaskCreateView.as_view(), name='task-create'),  # Создание задачи
-    # path('api/v1/projects/<int:project_id>/tasks/<int:pk>/', TaskDetailView.as_view(), name='task-detail'),  # Получение задачи
+    path('api/v1/projects/<int:project_id>/tasks/create/', TaskCreateView.as_view(), name='task-create'),  # Создание задачи
+    path('api/v1/projects/<int:project_id>/tasks/<int:pk>/', TaskDetailView.as_view(), name='task-detail'),  # Получение задачи
 
-    # # URL-ы для управления бюджетами
-    # path('api/v1/projects/<int:project_id>/budgets/', BudgetListView.as_view(), name='budget-list'),  # Список бюджетов
-    # path('api/v1/projects/<int:project_id>/budgets/create/', BudgetCreateView.as_view(), name='budget-create'),  # Создание бюджета
-    # path('api/v1/projects/<int:project_id>/budgets/<int:pk>/', BudgetDetailView.as_view(), name='budget-detail'),  # Получение бюджета
+    # URL-ы для управления бюджетами
+    path('api/v1/projects/<int:project_id>/budgets/', BudgetListView.as_view(), name='budget-list'),  # Список бюджетов
+    path('api/v1/projects/<int:project_id>/budgets/create/', BudgetCreateView.as_view(), name='budget-create'),  # Создание бюджета
+    path('api/v1/projects/<int:project_id>/budgets/<int:pk>/', BudgetDetailView.as_view(), name='budget-detail'),  # Получение бюджета
 
-    # # URL-ы для управления результатами
-    # path('api/v1/projects/<int:project_id>/results/', ResultListView.as_view(), name='result-list'),  # Список результатов
-    # path('api/v1/projects/<int:project_id>/results/create/', ResultCreateView.as_view(), name='result-create'),  # Создание результата
-    # path('api/v1/projects/<int:project_id>/results/<int:pk>/', ResultDetailView.as_view(), name='result-detail'),  # Получение результата
+    # URL-ы для управления результатами
+    path('api/v1/projects/<int:project_id>/results/', ResultListView.as_view(), name='result-list'),  # Список результатов
+    path('api/v1/projects/<int:project_id>/results/create/', ResultCreateView.as_view(), name='result-create'),  # Создание результата
+    path('api/v1/projects/<int:project_id>/results/<int:pk>/', ResultDetailView.as_view(), name='result-detail'),  # Получение результата
 
-    # # URL-ы для управления рисками
-    # path('api/v1/projects/<int:project_id>/risks/', RiskListView.as_view(), name='risk-list'),  # Список рисков
-    # path('api/v1/projects/<int:project_id>/risks/create/', RiskCreateView.as_view(), name='risk-create'),  # Создание риска
-    # path('api/v1/projects/<int:project_id>/risks/<int:pk>/', RiskDetailView.as_view(), name='risk-detail'),  # Получение риска
+    # URL-ы для управления рисками
+    path('api/v1/projects/<int:project_id>/risks/', RiskListView.as_view(), name='risk-list'),  # Список рисков
+    path('api/v1/projects/<int:project_id>/risks/create/', RiskCreateView.as_view(), name='risk-create'),  # Создание риска
+    path('api/v1/projects/<int:project_id>/risks/<int:pk>/', RiskDetailView.as_view(), name='risk-detail'),  # Получение риска
 ]
 
 if settings.DEBUG:

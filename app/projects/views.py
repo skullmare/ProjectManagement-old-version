@@ -48,81 +48,150 @@ class TaskListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        project_id = self.kwargs['project_id']
         if self.request.user.is_manager:
-            Task.objects.all()
-        return Task.objects.filter(project__projectmembership__user=self.request.user)
+            Task.objects.all(project_id=project_id)
+        return Task.objects.filter(project__projectmembership__user=self.request.user, project_id=project_id)
 
-# class TaskCreateView(generics.CreateAPIView):
-#     serializer_class = TaskSerializer
-#     permission_classes = [permissions.IsAuthenticated, IsLeader]
+class TaskCreateView(generics.CreateAPIView):
+    serializer_class = TaskSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-#     def perform_create(self, serializer):
+    def perform_create(self, serializer):
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
+            project_id = self.kwargs['project_id']
+            serializer.save(project_id=project_id)
 
-# class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
-#     serializer_class = TaskSerializer
-#     permission_classes = [permissions.IsAuthenticated, IsLeader]
+class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = TaskSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-#     def get_queryset(self):
+    def get_queryset(self):
+        project_id = self.kwargs['project_id']
+        if (self.request.user.is_manager or
+            ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists() or
+            ProjectMembership.objects.filter(user=self.request.user, role="participant", project=project_id).exists()):
+            return Task.objects.filter(project_id=project_id)
+        return Task.objects.none()
 
-# # =====================
-# # BUDGET VIEWS
-# # =====================
-# class BudgetListView(generics.ListAPIView):
-#     serializer_class = BudgetSerializer
-#     permission_classes = [permissions.IsAuthenticated]
+    def perform_update(self, serializer):
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
+            serializer.save()
 
-#     def get_queryset(self):
+    def perform_destroy(self, instance):
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
+            instance.delete()
+    
+  # =====================
+# BUDGET VIEWS
+# =====================
+class BudgetListView(generics.ListAPIView):
+    serializer_class = BudgetSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-# class BudgetCreateView(generics.CreateAPIView):
-#     serializer_class = BudgetSerializer
-#     permission_classes = [permissions.IsAuthenticated, IsLeader]
+    def get_queryset(self):
+        project_id = self.kwargs['project_id']
+        return Budget.objects.filter(project_id=project_id)
 
-#     def perform_create(self, serializer):
+class BudgetCreateView(generics.CreateAPIView):
+    serializer_class = BudgetSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-# class BudgetDetailView(generics.RetrieveUpdateDestroyAPIView):
-#     serializer_class = BudgetSerializer
-#     permission_classes = [permissions.IsAuthenticated, IsLeader]
+    def perform_create(self, serializer):
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
+            project_id = self.kwargs['project_id']
+            serializer.save(project_id=project_id)
 
-#     def get_queryset(self):
+class BudgetDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = BudgetSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-# # =====================
-# # RESULT VIEWS
-# # =====================
-# class ResultListView(generics.ListAPIView):
-#     serializer_class = ResultSerializer
-#     permission_classes = [permissions.IsAuthenticated]
+    def get_queryset(self):
+        project_id = self.kwargs['project_id']
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists():
+            return Budget.objects.filter(project_id=project_id)
+        return Budget.objects.none()
 
-#     def get_queryset(self):
+    def perform_update(self, serializer):
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
+            serializer.save()
 
-# class ResultCreateView(generics.CreateAPIView):
-#     serializer_class = ResultSerializer
-#     permission_classes = [permissions.IsAuthenticated, IsLeader]
+    def perform_destroy(self, instance):
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
+            instance.delete()
 
-#     def perform_create(self, serializer):
+# =====================
+# RESULT VIEWS
+# =====================
+class ResultListView(generics.ListAPIView):
+    serializer_class = ResultSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-# class ResultDetailView(generics.RetrieveUpdateDestroyAPIView):
-#     serializer_class = ResultSerializer
-#     permission_classes = [permissions.IsAuthenticated, IsLeader]
+    def get_queryset(self):
+        project_id = self.kwargs['project_id']
+        return Result.objects.filter(project_id=project_id)
 
-#     def get_queryset(self):
+class ResultCreateView(generics.CreateAPIView):
+    serializer_class = ResultSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-# # =====================
-# # RISK VIEWS
-# # =====================
-# class RiskListView(generics.ListAPIView):
-#     serializer_class = RiskSerializer
-#     permission_classes = [permissions.IsAuthenticated]
+    def perform_create(self, serializer):
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
+            project_id = self.kwargs['project_id']
+            serializer.save(project_id=project_id)
 
-#     def get_queryset(self):
+class ResultDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ResultSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-# class RiskCreateView(generics.CreateAPIView):
-#     serializer_class = RiskSerializer
-#     permission_classes = [permissions.IsAuthenticated, IsLeader]
+    def get_queryset(self):
+        project_id = self.kwargs['project_id']
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists():
+            return Result.objects.filter(project_id=project_id)
+        return Result.objects.none()
 
-#     def perform_create(self, serializer):
+    def perform_update(self, serializer):
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
+            serializer.save()
 
-# class RiskDetailView(generics.RetrieveUpdateDestroyAPIView):
-#     serializer_class = RiskSerializer
-#     permission_classes = [permissions.IsAuthenticated, IsLeader]
+    def perform_destroy(self, instance):
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
+            instance.delete()
 
-#     def get_queryset(self):
+# =====================
+# RISK VIEWS
+# =====================
+class RiskListView(generics.ListAPIView):
+    serializer_class = RiskSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        project_id = self.kwargs['project_id']
+        return Risk.objects.filter(project_id=project_id)
+
+class RiskCreateView(generics.CreateAPIView):
+    serializer_class = RiskSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
+            project_id = self.kwargs['project_id']
+            serializer.save(project_id=project_id)
+
+class RiskDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = RiskSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        project_id = self.kwargs['project_id']
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists():
+            return Risk.objects.filter(project_id=project_id)
+        return Risk.objects.none()
+
+    def perform_update(self, serializer):
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
+            serializer.save()
+
+    def perform_destroy(self, instance):
+        if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
+            instance.delete()
