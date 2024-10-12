@@ -2,7 +2,6 @@ from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError, PermissionDenied
 from .models import Project, Task, Budget, Result, Risk, ProjectMembership
 from .serializers import ProjectSerializer, TaskSerializer, BudgetSerializer, ResultSerializer, RiskSerializer
-from .permissions import IsManager, IsLeader, IsParticipant
 
 # =====================
 # PROJECT VIEWS
@@ -41,257 +40,121 @@ class ProjectListView(generics.ListAPIView):
 
 #     def get_queryset(self):
 
-# =====================
-# TASK VIEWS
-# =====================
-class TaskListView(generics.ListAPIView):
-    serializer_class = TaskSerializer
+class BaseProjectAPIView:
+    def check_project_permissions(self, project_id):
+        if not (self.request.user.is_manager or
+                ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists() or
+                ProjectMembership.objects.filter(user=self.request.user, role="participant", project=project_id).exists()):
+            raise PermissionDenied("У вас недостаточно прав для доступа к данному проекту.")
+
+class BaseListView(generics.ListAPIView, BaseProjectAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         project_id = self.kwargs['project_id']
         try:
-            if self.request.user.is_manager:
-                return Task.objects.filter(project_id=project_id)
-            return Task.objects.filter(project__projectmembership__user=self.request.user, project_id=project_id)
+            self.check_project_permissions(project_id)
+            return self.queryset_class.filter(project_id=project_id)
         except Exception as e:
-            raise ValidationError(f"Ошибка при получении задач: {str(e)}")
+            raise ValidationError(f"Ошибка при получении данных: {str(e)}")
 
-class TaskCreateView(generics.CreateAPIView):
-    serializer_class = TaskSerializer
+class BaseCreateView(generics.CreateAPIView, BaseProjectAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
+        project_id = self.kwargs['project_id']
         try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
-                project_id = self.kwargs['project_id']
+            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists():
                 serializer.save(project_id=project_id)
             else:
-                raise PermissionDenied("У вас недостаточно прав для создания задачи.")
+                raise PermissionDenied("У вас недостаточно прав для создания записи.")
         except Exception as e:
-            raise ValidationError(f"Ошибка при создании задачи: {str(e)}")
+            raise ValidationError(f"Ошибка при создании записи: {str(e)}")
 
-class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = TaskSerializer
+class BaseDetailView(generics.RetrieveUpdateDestroyAPIView, BaseProjectAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         project_id = self.kwargs['project_id']
+        id = self.kwargs['pk']
         try:
-            if (self.request.user.is_manager or
-                ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists() or
-                ProjectMembership.objects.filter(user=self.request.user, role="participant", project=project_id).exists()):
-                return Task.objects.filter(project_id=project_id)
-            return Task.objects.none()
+            self.check_project_permissions(project_id)
+            return self.queryset_class.filter(project_id=project_id, id=id)
         except Exception as e:
-            raise ValidationError(f"Ошибка при получении задачи: {str(e)}")
+            raise ValidationError(f"Ошибка при получении записи: {str(e)}")
 
     def perform_update(self, serializer):
+        project_id = self.kwargs['project_id']
         try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
+            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists():
                 serializer.save()
             else:
-                raise PermissionDenied("У вас недостаточно прав для обновления задачи.")
+                raise PermissionDenied("У вас недостаточно прав для обновления записи.")
         except Exception as e:
-            raise ValidationError(f"Ошибка при обновлении задачи: {str(e)}")
+            raise ValidationError(f"Ошибка при обновлении записи: {str(e)}")
 
     def perform_destroy(self, instance):
+        project_id = self.kwargs['project_id']
         try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
+            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists():
                 instance.delete()
             else:
-                raise PermissionDenied("У вас недостаточно прав для удаления задачи.")
+                raise PermissionDenied("У вас недостаточно прав для удаления записи.")
         except Exception as e:
-            raise ValidationError(f"Ошибка при удалении задачи: {str(e)}")
+            raise ValidationError(f"Ошибка при удалении записи: {str(e)}")
 
+# =====================
+# TASK VIEWS
+# =====================
+class TaskListView(BaseListView):
+    serializer_class = TaskSerializer
+    queryset_class = Task.objects
+
+class TaskCreateView(BaseCreateView):
+    serializer_class = TaskSerializer
+
+class TaskDetailView(BaseDetailView):
+    serializer_class = TaskSerializer
+    queryset_class = Task.objects
 
 # =====================
 # BUDGET VIEWS
 # =====================
-class BudgetListView(generics.ListAPIView):
+class BudgetListView(BaseListView):
     serializer_class = BudgetSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    queryset_class = Budget.objects
 
-    def get_queryset(self):
-        project_id = self.kwargs['project_id']
-        try:
-            if self.request.user.is_manager:
-                return Budget.objects.filter(project_id=project_id)
-            return Budget.objects.filter(project__projectmembership__user=self.request.user, project_id=project_id)
-        except Exception as e:
-            raise ValidationError(f"Ошибка при получении бюджета: {str(e)}")
-
-class BudgetCreateView(generics.CreateAPIView):
+class BudgetCreateView(BaseCreateView):
     serializer_class = BudgetSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
-    def perform_create(self, serializer):
-        try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
-                project_id = self.kwargs['project_id']
-                serializer.save(project_id=project_id)
-            else:
-                raise PermissionDenied("У вас недостаточно прав для создания бюджета.")
-        except Exception as e:
-            raise ValidationError(f"Ошибка при создании бюджета: {str(e)}")
-
-class BudgetDetailView(generics.RetrieveUpdateDestroyAPIView):
+class BudgetDetailView(BaseDetailView):
     serializer_class = BudgetSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        project_id = self.kwargs['project_id']
-        try:
-            if (self.request.user.is_manager or
-                ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists() or
-                ProjectMembership.objects.filter(user=self.request.user, role="participant", project=project_id).exists()):
-                return Budget.objects.filter(project_id=project_id)
-            return Budget.objects.none()
-        except Exception as e:
-            raise ValidationError(f"Ошибка при получении бюджета: {str(e)}")
-
-    def perform_update(self, serializer):
-        try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
-                serializer.save()
-            else:
-                raise PermissionDenied("У вас недостаточно прав для обновления бюджета.")
-        except Exception as e:
-            raise ValidationError(f"Ошибка при обновлении бюджета: {str(e)}")
-
-    def perform_destroy(self, instance):
-        try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
-                instance.delete()
-            else:
-                raise PermissionDenied("У вас недостаточно прав для удаления бюджета.")
-        except Exception as e:
-            raise ValidationError(f"Ошибка при удалении бюджета: {str(e)}")
-
+    queryset_class = Budget.objects
 
 # =====================
 # RESULT VIEWS
 # =====================
-class ResultListView(generics.ListAPIView):
+class ResultListView(BaseListView):
     serializer_class = ResultSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    queryset_class = Result.objects
 
-    def get_queryset(self):
-        project_id = self.kwargs['project_id']
-        try:
-            if self.request.user.is_manager:
-                return Result.objects.filter(project_id=project_id)
-            return Result.objects.filter(project__projectmembership__user=self.request.user, project_id=project_id)
-        except Exception as e:
-            raise ValidationError(f"Ошибка при получении результата: {str(e)}")
-
-class ResultCreateView(generics.CreateAPIView):
+class ResultCreateView(BaseCreateView):
     serializer_class = ResultSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
-    def perform_create(self, serializer):
-        try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
-                project_id = self.kwargs['project_id']
-                serializer.save(project_id=project_id)
-            else:
-                raise PermissionDenied("У вас недостаточно прав для создания результата.")
-        except Exception as e:
-            raise ValidationError(f"Ошибка при создании результата: {str(e)}")
-
-class ResultDetailView(generics.RetrieveUpdateDestroyAPIView):
+class ResultDetailView(BaseDetailView):
     serializer_class = ResultSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        project_id = self.kwargs['project_id']
-        try:
-            if (self.request.user.is_manager or
-                ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists() or
-                ProjectMembership.objects.filter(user=self.request.user, role="participant", project=project_id).exists()):
-                return Result.objects.filter(project_id=project_id)
-            return Result.objects.none()
-        except Exception as e:
-            raise ValidationError(f"Ошибка при получении результата: {str(e)}")
-
-    def perform_update(self, serializer):
-        try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
-                serializer.save()
-            else:
-                raise PermissionDenied("У вас недостаточно прав для обновления результата.")
-        except Exception as e:
-            raise ValidationError(f"Ошибка при обновлении результата: {str(e)}")
-
-    def perform_destroy(self, instance):
-        try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
-                instance.delete()
-            else:
-                raise PermissionDenied("У вас недостаточно прав для удаления результата.")
-        except Exception as e:
-            raise ValidationError(f"Ошибка при удалении результата: {str(e)}")
-
+    queryset_class = Result.objects
 
 # =====================
 # RISK VIEWS
 # =====================
-class RiskListView(generics.ListAPIView):
+class RiskListView(BaseListView):
     serializer_class = RiskSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    queryset_class = Risk.objects
 
-    def get_queryset(self):
-        project_id = self.kwargs['project_id']
-        try:
-            if self.request.user.is_manager:
-                return Risk.objects.filter(project_id=project_id)
-            return Risk.objects.filter(project__projectmembership__user=self.request.user, project_id=project_id)
-        except Exception as e:
-            raise ValidationError(f"Ошибка при получении рисков: {str(e)}")
-
-class RiskCreateView(generics.CreateAPIView):
+class RiskCreateView(BaseCreateView):
     serializer_class = RiskSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
-    def perform_create(self, serializer):
-        try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
-                project_id = self.kwargs['project_id']
-                serializer.save(project_id=project_id)
-            else:
-                raise PermissionDenied("У вас недостаточно прав для создания риска.")
-        except Exception as e:
-            raise ValidationError(f"Ошибка при создании риска: {str(e)}")
-
-class RiskDetailView(generics.RetrieveUpdateDestroyAPIView):
+class RiskDetailView(BaseDetailView):
     serializer_class = RiskSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        project_id = self.kwargs['project_id']
-        try:
-            if (self.request.user.is_manager or
-                ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists() or
-                ProjectMembership.objects.filter(user=self.request.user, role="participant", project=project_id).exists()):
-                return Risk.objects.filter(project_id=project_id)
-            return Risk.objects.none()
-        except Exception as e:
-            raise ValidationError(f"Ошибка при получении риска: {str(e)}")
-
-    def perform_update(self, serializer):
-        try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
-                serializer.save()
-            else:
-                raise PermissionDenied("У вас недостаточно прав для обновления риска.")
-        except Exception as e:
-            raise ValidationError(f"Ошибка при обновлении риска: {str(e)}")
-
-    def perform_destroy(self, instance):
-        try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=self.kwargs['project_id']).exists():
-                instance.delete()
-            else:
-                raise PermissionDenied("У вас недостаточно прав для удаления риска.")
-        except Exception as e:
-            raise ValidationError(f"Ошибка при удалении риска: {str(e)}")
+    queryset_class = Risk.objects
