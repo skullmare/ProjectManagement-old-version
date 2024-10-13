@@ -3,6 +3,15 @@ from rest_framework.exceptions import ValidationError, PermissionDenied
 from .models import Project, Task, Budget, Result, Risk, ProjectMembership
 from .serializers import ProjectSerializer, TaskSerializer, BudgetSerializer, ResultSerializer, RiskSerializer
 
+class BaseProjectAPIView:
+    def check_project_permissions(self, project_id):
+        if not (self.request.user.is_manager or
+                ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists() or
+                ProjectMembership.objects.filter(user=self.request.user, role="participant", project=project_id).exists()):
+            raise PermissionDenied("У вас недостаточно прав для доступа к данному проекту.")
+    def check_project_permissions_leader(self, project_id):
+        return ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists()
+
 # =====================
 # PROJECT VIEWS
 # =====================
@@ -40,12 +49,6 @@ class ProjectListView(generics.ListAPIView):
 
 #     def get_queryset(self):
 
-class BaseProjectAPIView:
-    def check_project_permissions(self, project_id):
-        if not (self.request.user.is_manager or
-                ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists() or
-                ProjectMembership.objects.filter(user=self.request.user, role="participant", project=project_id).exists()):
-            raise PermissionDenied("У вас недостаточно прав для доступа к данному проекту.")
 
 class BaseListView(generics.ListAPIView, BaseProjectAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -64,7 +67,7 @@ class BaseCreateView(generics.CreateAPIView, BaseProjectAPIView):
     def perform_create(self, serializer):
         project_id = self.kwargs['project_id']
         try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists():
+            if self.check_project_permissions_leader(project_id):
                 serializer.save(project_id=project_id)
             else:
                 raise PermissionDenied("У вас недостаточно прав для создания записи.")
@@ -86,7 +89,7 @@ class BaseDetailView(generics.RetrieveUpdateDestroyAPIView, BaseProjectAPIView):
     def perform_update(self, serializer):
         project_id = self.kwargs['project_id']
         try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists():
+            if self.check_project_permissions_leader(project_id):
                 serializer.save()
             else:
                 raise PermissionDenied("У вас недостаточно прав для обновления записи.")
@@ -96,7 +99,7 @@ class BaseDetailView(generics.RetrieveUpdateDestroyAPIView, BaseProjectAPIView):
     def perform_destroy(self, instance):
         project_id = self.kwargs['project_id']
         try:
-            if ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists():
+            if self.check_project_permissions_leader(project_id):
                 instance.delete()
             else:
                 raise PermissionDenied("У вас недостаточно прав для удаления записи.")
