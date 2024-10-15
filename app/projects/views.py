@@ -11,44 +11,10 @@ class BaseProjectAPIView:
             raise PermissionDenied("У вас недостаточно прав для доступа к данному проекту.")
     def check_project_permissions_leader(self, project_id):
         return ProjectMembership.objects.filter(user=self.request.user, role="leader", project=project_id).exists()
-
+    
 # =====================
-# PROJECT VIEWS
+# BASE VIEWS FOR PARAMETERS
 # =====================
-class ProjectListView(generics.ListAPIView):
-    serializer_class = ProjectSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.is_manager:
-            Project.objects.all()
-        return Project.objects.filter(projectmembership__user=self.request.user)
-        
-
-# class ProjectCreateView(generics.CreateAPIView):
-#     serializer_class = ProjectSerializer
-#     permission_classes = [permissions.IsAuthenticated, IsLeader]
-
-#     def perform_create(self, serializer):
-
-# class ProjectDetailView(generics.RetrieveAPIView):
-#     serializer_class = ProjectSerializer
-#     permission_classes = [permissions.IsAuthenticated, IsManager | IsLeader | IsParticipant]
-
-#     def get_queryset(self):
-
-# class ProjectUpdateView(generics.UpdateAPIView):
-#     serializer_class = ProjectSerializer
-#     permission_classes = [permissions.IsAuthenticated, IsLeader]
-
-#     def get_queryset(self):
-
-# class ProjectDeleteView(generics.DestroyAPIView):
-#     serializer_class = ProjectSerializer
-#     permission_classes = [permissions.IsAuthenticated, IsLeader]
-
-#     def get_queryset(self):
-
 
 class BaseListView(generics.ListAPIView, BaseProjectAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -105,6 +71,70 @@ class BaseDetailView(generics.RetrieveUpdateDestroyAPIView, BaseProjectAPIView):
                 raise PermissionDenied("У вас недостаточно прав для удаления записи.")
         except Exception as e:
             raise ValidationError(f"Ошибка при удалении записи: {str(e)}")
+
+# =====================
+# PROJECT VIEWS
+# =====================
+class ProjectListView(generics.ListAPIView):
+    serializer_class = ProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.is_manager:
+            return Project.objects.all()
+        return Project.objects.filter(projectmembership__user=self.request.user)
+
+class ProjectCreateView(generics.CreateAPIView):
+    serializer_class = ProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        if self.request.user.is_leader:
+            project = serializer.save()
+            ProjectMembership.objects.create(user=self.request.user, project=project, role='leader')
+        else:
+            raise PermissionDenied("У вас нет прав на создание проекта.")
+
+class ProjectDetailView(generics.RetrieveAPIView, BaseProjectAPIView):
+    serializer_class = ProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        project_id = self.kwargs['pk']
+        self.check_project_permissions(project_id)
+        return Project.objects.filter(id=project_id)
+
+class ProjectUpdateView(generics.UpdateAPIView, BaseProjectAPIView):
+    serializer_class = ProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+            
+    def get_queryset(self):
+        project_id = self.kwargs['pk']
+        self.check_project_permissions(project_id)
+        return Project.objects.filter(id=project_id)
+    
+    def perform_update(self, serializer):
+        project_id = self.kwargs['pk']
+        if self.check_project_permissions_leader(project_id):
+            serializer.save()
+        else:
+            raise PermissionDenied("У вас недостаточно прав для обновления проекта.")
+
+class ProjectDeleteView(generics.DestroyAPIView, BaseProjectAPIView):
+    serializer_class = ProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        project_id = self.kwargs['pk']
+        self.check_project_permissions(project_id)
+        return Project.objects.filter(id=project_id)
+    
+    def perform_destroy(self, instance):
+        project_id = instance.id
+        if self.check_project_permissions_leader(project_id):
+            instance.delete()
+        else:
+            raise PermissionDenied("У вас недостаточно прав для удаления проекта.")
 
 # =====================
 # TASK VIEWS

@@ -5,10 +5,10 @@ from django.urls import path, include
 from user.views import PasswordResetConfirmView, ActivationView
 from projects.views import (
     ProjectListView,
-    # ProjectCreateView,
-    # ProjectDetailView,
-    # ProjectUpdateView,
-    # ProjectDeleteView,
+    ProjectCreateView,
+    ProjectDetailView,
+    ProjectUpdateView,
+    ProjectDeleteView,
     TaskListView,
     TaskCreateView,
     TaskDetailView,
@@ -33,10 +33,10 @@ urlpatterns = [
     
     # URL-ы для управления проектами
     path('api/v1/projects/', ProjectListView.as_view(), name='project-list'),  # Список проектов
-    # path('api/v1/projects/create/', ProjectCreateView.as_view(), name='project-create'),  # Создание проекта
-    # path('api/v1/projects/<int:pk>/', ProjectDetailView.as_view(), name='project-detail'),  # Получение проекта
-    # path('api/v1/projects/<int:pk>/update/', ProjectUpdateView.as_view(), name='project-update'),  # Обновление проекта
-    # path('api/v1/projects/<int:pk>/delete/', ProjectDeleteView.as_view(), name='project-delete'),  # Удаление проекта
+    path('api/v1/projects/create/', ProjectCreateView.as_view(), name='project-create'),  # Создание проекта
+    path('api/v1/projects/<int:pk>/', ProjectDetailView.as_view(), name='project-detail'),  # Получение проекта
+    path('api/v1/projects/<int:pk>/update/', ProjectUpdateView.as_view(), name='project-update'),  # Обновление проекта
+    path('api/v1/projects/<int:pk>/delete/', ProjectDeleteView.as_view(), name='project-delete'),  # Удаление проекта
 
     # # URL-ы для управления задачами
     path('api/v1/projects/<int:project_id>/tasks/', TaskListView.as_view(), name='task-list'),  # Список задач
