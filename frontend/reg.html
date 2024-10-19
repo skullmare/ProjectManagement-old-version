@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .error {
+            border-color: red !important;
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container vh-100 d-flex justify-content-center align-items-center">
+        <div class="w-100">
+            <h2 class="text-center">Регистрация</h2>
+            <div class="alert alert-danger d-none" id="generalError"></div>
+            <div class="alert alert-success d-none" id="successMessage"></div>
+            <form id="registrationForm">
+                <div class="form-group">
+                    <label for="first_name">Имя</label>
+                    <input type="text" class="form-control" id="first_name" placeholder="Введите ваше имя" autocomplete="name">
+                    <div class="error-message" id="first_nameError"></div>
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Фамилия</label>
+                    <input type="text" class="form-control" id="last_name" placeholder="Введите вашу фамилию" autocomplete="family-name">
+                    <div class="error-message" id="last_nameError"></div>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" class="form-control" id="email" placeholder="Введите ваш email" autocomplete="email">
+                    <div class="error-message" id="emailError"></div>
+                </div>
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input type="password" class="form-control" id="password" placeholder="Введите ваш пароль" autocomplete="new-password">
+                    <div class="error-message" id="passwordError"></div>
+                </div>
+                <div class="form-group">
+                    <label for="re_password">Повторите пароль</label>
+                    <input type="password" class="form-control" id="re_password" placeholder="Повторите ваш пароль" autocomplete="new-password">
+                    <div class="error-message" id="re_passwordError"></div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Зарегистрироваться</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.getElementById('registrationForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            resetMessages();
+
+            const first_name = document.getElementById('first_name').value;
+            const last_name = document.getElementById('last_name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const re_password = document.getElementById('re_password').value;
+
+            // Проверка совпадения паролей
+            if (password !== re_password) {
+                document.getElementById('passwordError').textContent = 'Пароли не совпадают.';
+                document.getElementById('password').classList.add('error');
+                document.getElementById('re_passwordError').textContent = 'Пароли не совпадают.';
+                document.getElementById('re_password').classList.add('error');
+            }
+
+            const data = {
+                email: email,
+                first_name: first_name,
+                last_name: last_name,
+                password: password,
+                re_password: re_password
+            };
+
+            fetch('http://127.0.0.1:8000/api/v1/users/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return Promise.reject(response);
+                    }
+                })
+                .then(data => {
+                    successMessages('На ваш почтовый ящик отправлено письмо для активации аккаунта.');
+                })
+                .catch(response => {
+                    if (response.status === 400) {
+                        response.json().then(errorData => {
+                            handleErrors(errorData);
+                        });
+                    } else {
+                        errorMessages('Произошла ошибка при регистрации.');
+                    }
+                });
+        });
+
+        function resetMessages() {
+            document.getElementById('generalError').classList.add('d-none'); // Скрываем общий блок ошибок
+            document.getElementById('successMessage').classList.add('d-none'); // Скрываем блок успешного сообщения
+            const inputs = document.querySelectorAll('.form-control');
+            inputs.forEach(input => {
+                input.classList.remove('error');
+            });
+            const errorMessages = document.querySelectorAll('.error-message');
+            errorMessages.forEach(msg => {
+                msg.textContent = '';
+            });
+        }
+
+        function handleErrors(errorData) {
+            for (const [field, errorsArray] of Object.entries(errorData)) {
+                if (Array.isArray(errorsArray) && errorsArray.length > 0) {
+                    let inputFieldId = '';
+                    switch (field) {
+                        case 'first_name':
+                            inputFieldId = 'first_name';
+                            break;
+                        case 'last_name':
+                            inputFieldId = 'last_name';
+                            break;
+                        case 'email':
+                            inputFieldId = 'email';
+                            break;
+                        case 'password':
+                            inputFieldId = 'password';
+                            break;
+                        case 're_password':
+                            inputFieldId = 're_password';
+                            break;
+                    }
+
+                    const inputField = document.getElementById(inputFieldId);
+                    if (inputField) {
+                        inputField.classList.add('error');
+                    }
+
+                    const errorMessageElement = document.getElementById(field + 'Error');
+                    if (errorMessageElement) {
+                        errorMessageElement.textContent = errorsArray.join(', ');
+                    }
+                }
+            }
+        }
+
+        function errorMessages(text) {
+            document.getElementById('generalError').textContent = text;
+            document.getElementById('generalError').classList.remove('d-none');
+        }
+
+        function successMessages(text) {
+            document.getElementById('successMessage').textContent = text;
+            document.getElementById('successMessage').classList.remove('d-none');
+        }
+    </script>
+</body>
+
+</html>
