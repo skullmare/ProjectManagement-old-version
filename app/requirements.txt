@@ -1,6 +1,6 @@
 asgiref==3.8.1
 certifi==2024.7.4
-cffi==1.16.0
+cffi>=1.16.0
 channels==4.1.0
 charset-normalizer==3.3.2
 cryptography==42.0.8
@@ -15,7 +15,7 @@ idna==3.7
 oauthlib==3.2.2
 pillow==10.4.0
 psycopg==3.2.1
-psycopg-binary==3.2.1
+psycopg-binary>=3.2.6
 pycparser==2.22
 PyJWT==2.8.0
 python-decouple==3.8

@@ -14,7 +14,7 @@ from pathlib import Path
 import datetime, os
 from decouple import config
 
-
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -41,13 +41,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'channels',
+    'django_filters',
     'user',
     'projects',
     'rest_framework',
     'djoser',
     'corsheaders',
+    'oauth2_provider',
     'social_django',
-
 ]
 
 ASGI_APPLICATION = 'app.asgi.application'
@@ -60,6 +61,10 @@ AUTHENTICATION_BACKENDS = (
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+]
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
@@ -198,6 +203,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PARSER_CLASSES': (
         'rest_framework.parsers.JSONParser',
     ),
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ],
     
 }
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -207,25 +215,28 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'http://127.0.0.1:8000/auth/complete/google-oauth2/'
+SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = 'http://127.0.0.1:8000/auth/complete/google-oauth2/'
+
 seconds = 300
 if DEBUG:
     seconds = 360000
 
 DJOSER = {
-    'USER_ID_FIELD': 'email', #1
-    'LOGIN_FIELD': 'email', #1
+    'USER_ID_FIELD': 'email',
+    'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': True, #/users/
     'SET_PASSWORD_RETYPE': True, #/users/set_password/
     'PASSWORD_RESET_CONFIRM_RETYPE': True, #/users/reset_password_confirm/
-    'PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND': True, #1
-    'USERNAME_RESET_SHOW_EMAIL_NOT_FOUND': True, #1
-    'USERNAME_CHANGED_EMAIL_CONFIRMATION': True, #1
-    'PASSWORD_CHANGED_EMAIL_CONFIRMATION': True, #1
-    'SEND_CONFIRMATION_EMAIL': True, #1
-    'PASSWORD_RESET_CONFIRM_URL': 'password_reset/{uid}/{token}/', #1
-    'USERNAME_RESET_CONFIRM_URL': 'email_reset/{uid}/{token}', #1
-    'ACTIVATION_URL': 'activate/{uid}/{token}/', #1
-    'SEND_ACTIVATION_EMAIL': True, #1
+    'PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND': True,
+    'USERNAME_RESET_SHOW_EMAIL_NOT_FOUND': True,
+    'USERNAME_CHANGED_EMAIL_CONFIRMATION': True,
+    'PASSWORD_CHANGED_EMAIL_CONFIRMATION': True,
+    'SEND_CONFIRMATION_EMAIL': True,
+    'PASSWORD_RESET_CONFIRM_URL': 'password_reset/{uid}/{token}/',
+    'USERNAME_RESET_CONFIRM_URL': 'email_reset/{uid}/{token}',
+    'ACTIVATION_URL': 'activate/{uid}/{token}/',
+    'SEND_ACTIVATION_EMAIL': True,
     'SERIALIZERS': {
         'user_create': 'user.serializers.CustomUserCreateSerializer',
         'user': 'user.serializers.CustomUserUpdateSerializer',
@@ -235,8 +246,8 @@ DJOSER = {
         'password_reset_confirm': 'djoser.serializers.PasswordResetConfirmSerializer',
     },
     'EMAIL': {
-        'activation': 'user.email.CustomActivationEmail', #
-        'password_reset': 'djoser.email.PasswordResetEmail', #
+        'activation': 'user.email.CustomActivationEmail',
+        'password_reset': 'djoser.email.PasswordResetEmail',
     },
     'MESSAGES': 'djoser.constants.Messages',
     'SEND_CONFIRMATION': True,

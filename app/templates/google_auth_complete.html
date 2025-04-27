@@ -1,0 +1,26 @@
+<script>
+    // Функция для получения значения cookie по имени
+    function getCookie(name) {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [cookieName, cookieValue] = cookie.trim().split('=');
+            if (cookieName === name) {
+                return decodeURIComponent(cookieValue);
+            }
+        }
+        return null;
+    }
+
+    // Получаем токены из cookies
+    const accessToken = getCookie('access_token');
+    const refreshToken = getCookie('refresh_token');
+
+    // Сохраняем токены в localStorage
+    if (accessToken && refreshToken) {
+        localStorage.setItem('access_token', accessToken);
+        localStorage.setItem('refresh_token', refreshToken);
+    } else {
+        console.error('Токены не найдены в cookies.');
+    }
+    window.location.href = '/';  // Укажите URL главной страницы
+</script>

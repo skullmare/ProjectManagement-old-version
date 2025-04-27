@@ -3,6 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from user.views import PasswordResetConfirmView, ActivationView
+from user import google
 from projects.views import (
     ProjectListView,
     ProjectCreateView,
@@ -21,6 +22,9 @@ from projects.views import (
     RiskListView,
     RiskCreateView,
     RiskDetailView,
+    ProjectMemberListView,
+    ProjectMemberCreateView,
+    ProjectMemberDetailView
 )
 
 urlpatterns = [
@@ -29,7 +33,8 @@ urlpatterns = [
     path('activate/<uid>/<token>/', ActivationView.as_view(), name='activate'),    
     path('api/v1/', include('djoser.urls')),
     path('api/v1/', include('djoser.urls.jwt')),
-    path('api/v1/', include('social_django.urls', namespace='social')),
+    path('auth/google/', google.google_auth, name='google_auth'),
+    path('auth/complete/google-oauth2/', google.google_auth_complete, name='google_auth_complete'),
     
     # URL-ы для управления проектами
     path('api/v1/projects/', ProjectListView.as_view(), name='project-list'),  # Список проектов
@@ -57,6 +62,23 @@ urlpatterns = [
     path('api/v1/projects/<int:project_id>/risks/', RiskListView.as_view(), name='risk-list'),  # Список рисков
     path('api/v1/projects/<int:project_id>/risks/create/', RiskCreateView.as_view(), name='risk-create'),  # Создание риска
     path('api/v1/projects/<int:project_id>/risks/<int:pk>/', RiskDetailView.as_view(), name='risk-detail'),  # Получение риска
+
+    # URL-ы для управления участниками
+    path(
+        'api/v1/projects/<int:project_id>/members/',
+        ProjectMemberListView.as_view(),
+        name='project-members-list'
+    ),
+    path(
+        'api/v1/projects/<int:project_id>/members/add/',
+        ProjectMemberCreateView.as_view(),
+        name='project-members-add'
+    ),
+    path(
+        'api/v1/projects/<int:project_id>/members/<int:user_id>/',
+        ProjectMemberDetailView.as_view(),
+        name='project-member-detail'
+    ),
 ]
 
 if settings.DEBUG:

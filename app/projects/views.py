@@ -1,7 +1,9 @@
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError, PermissionDenied
+from rest_framework.pagination import PageNumberPagination
+from django_filters.rest_framework import DjangoFilterBackend
 from .models import Project, Task, Budget, Result, Risk, ProjectMembership
-from .serializers import ProjectSerializer, TaskSerializer, BudgetSerializer, ResultSerializer, RiskSerializer
+from .serializers import ProjectSerializer, TaskSerializer, BudgetSerializer, ResultSerializer, RiskSerializer, ProjectMembershipSerializer
 
 class BaseProjectAPIView:
     def check_project_permissions(self, project_id):
@@ -75,14 +77,29 @@ class BaseDetailView(generics.RetrieveUpdateDestroyAPIView, BaseProjectAPIView):
 # =====================
 # PROJECT VIEWS
 # =====================
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10  # Количество элементов на странице
+    page_size_query_param = 'page_size'
+    max_page_size = 100  # Максимальное количество элементов на странице
+
 class ProjectListView(generics.ListAPIView):
     serializer_class = ProjectSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['name']  # Поле для фильтрации
 
     def get_queryset(self):
-        if self.request.user.is_manager:
-            return Project.objects.all()
-        return Project.objects.filter(projectmembership__user=self.request.user)
+        queryset = Project.objects.all() if self.request.user.is_manager \
+            else Project.objects.filter(projectmembership__user=self.request.user)
+        
+        # Дополнительная фильтрация по частичному совпадению названия
+        name_filter = self.request.query_params.get('name', None)
+        if name_filter:
+            queryset = queryset.filter(name__icontains=name_filter)
+            print(queryset.filter(name__icontains=name_filter).query)
+            
+        return queryset
 
 class ProjectCreateView(generics.CreateAPIView):
     serializer_class = ProjectSerializer
@@ -191,3 +208,18 @@ class RiskCreateView(BaseCreateView):
 class RiskDetailView(BaseDetailView):
     serializer_class = RiskSerializer
     queryset_class = Risk.objects
+
+# =====================
+# MEMBERS VIEWS
+# =====================
+class ProjectMemberListView(BaseListView):
+    queryset_class = ProjectMembership.objects
+    serializer_class = ProjectMembershipSerializer
+
+class ProjectMemberCreateView(BaseCreateView):
+    queryset_class = ProjectMembership.objects
+    serializer_class = ProjectMembershipSerializer
+
+class ProjectMemberDetailView(BaseDetailView):
+    queryset_class = ProjectMembership.objects
+    serializer_class = ProjectMembershipSerializer

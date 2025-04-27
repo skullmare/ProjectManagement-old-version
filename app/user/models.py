@@ -25,6 +25,7 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
+    google_id = models.CharField(max_length=255, unique=True, null=True, blank=True)  # Новое поле
     first_name = models.CharField(max_length=30)  # Обязательное поле
     last_name = models.CharField(max_length=30)   # Обязательное поле
     is_leader = models.BooleanField(default=False)
