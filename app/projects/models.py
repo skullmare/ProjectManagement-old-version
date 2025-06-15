@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model  # Импортируем функцию для получения модели пользователя
+from simple_history.models import HistoricalRecords  # Добавляем импорт
 
 # Получаем модель пользователя
 User = get_user_model()
@@ -18,6 +19,7 @@ class Project(models.Model):
         through_fields=('project', 'user'),
         related_name='projects'
     )
+    history = HistoricalRecords()  # Добавляем отслеживание истории
 
     class Meta:
         verbose_name = "Проект"
@@ -40,6 +42,7 @@ class ProjectMembership(models.Model):
         auto_now_add=True,
         verbose_name="Дата назначения"
     )
+    history = HistoricalRecords()  # Добавляем отслеживание истории
 
     class Meta:
         unique_together = ('user', 'project')
@@ -55,6 +58,7 @@ class Budget(models.Model):
     project = models.ForeignKey(Project, related_name='budgets', on_delete=models.CASCADE)
     year = models.PositiveIntegerField()  # Поле для года
     amount = models.DecimalField(max_digits=10, decimal_places=2)  # Поле для бюджета
+    history = HistoricalRecords()  # Добавляем отслеживание истории
 
     class Meta:
         unique_together = ('project', 'year')  # Уникальное ограничение на сочетание проекта и года
@@ -69,6 +73,8 @@ class Risk(models.Model):
     project = models.ForeignKey(Project, related_name='risks', on_delete=models.CASCADE)
     name = models.CharField(max_length=100)  # Название риска
     description = models.TextField()  # Описание риска
+    history = HistoricalRecords()  # Добавляем отслеживание истории
+
     class Meta:
         verbose_name = "Риск"  # единственное число
         verbose_name_plural = "Риски"  # множественное число
@@ -79,6 +85,8 @@ class Risk(models.Model):
 class Result(models.Model):
     project = models.ForeignKey(Project, related_name='results', on_delete=models.CASCADE)
     text = models.TextField()  # Результат в виде текста
+    history = HistoricalRecords()  # Добавляем отслеживание истории
+
     class Meta:
         verbose_name = "Результат"  # единственное число
         verbose_name_plural = "Результаты"  # множественное число
@@ -115,6 +123,8 @@ class Task(models.Model):
         blank=True,
         verbose_name="Назначенные пользователи"
     )
+    history = HistoricalRecords()  # Добавляем отслеживание истории
+
     class Meta:
         verbose_name = "Задача"  # единственное число
         verbose_name_plural = "Задачи"  # множественное число

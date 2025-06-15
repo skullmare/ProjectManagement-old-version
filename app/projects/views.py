@@ -1,7 +1,7 @@
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError, PermissionDenied
 from rest_framework.pagination import PageNumberPagination
-from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
 from .models import Project, Task, Budget, Result, Risk, ProjectMembership
 from .serializers import ProjectSerializer, TaskSerializer, BudgetSerializer, ResultSerializer, RiskSerializer, ProjectMembershipSerializer
 
@@ -86,19 +86,12 @@ class ProjectListView(generics.ListAPIView):
     serializer_class = ProjectSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = StandardResultsSetPagination
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [SearchFilter]
     filterset_fields = ['name']  # Поле для фильтрации
 
     def get_queryset(self):
         queryset = Project.objects.all() if self.request.user.is_manager \
-            else Project.objects.filter(projectmembership__user=self.request.user)
-        
-        # Дополнительная фильтрация по частичному совпадению названия
-        name_filter = self.request.query_params.get('name', None)
-        if name_filter:
-            queryset = queryset.filter(name__icontains=name_filter)
-            print(queryset.filter(name__icontains=name_filter).query)
-            
+            else Project.objects.filter(projectmembership__user=self.request.user)         
         return queryset
 
 class ProjectCreateView(generics.CreateAPIView):
@@ -118,6 +111,8 @@ class ProjectDetailView(generics.RetrieveAPIView, BaseProjectAPIView):
 
     def get_queryset(self):
         project_id = self.kwargs['pk']
+        if not (Project.objects.filter(id=project_id).exists()):
+            raise PermissionDenied("Проект не найден!")
         self.check_project_permissions(project_id)
         return Project.objects.filter(id=project_id)
 

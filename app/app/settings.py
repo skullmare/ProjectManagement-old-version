@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'oauth2_provider',
     'social_django',
+    'simple_history',
+    'import_export',
 ]
 
 ASGI_APPLICATION = 'app.asgi.application'
@@ -82,6 +84,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 CORS_ALLOWED_ORIGINS = [
