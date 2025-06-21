@@ -1,0 +1,19 @@
+[MASTER]
+load-plugins=pylint_django
+ignore=migrations
+ignore-patterns=.*/venv/.*,.*/Lib/.*,.*/site-packages/.*
+
+[MESSAGES CONTROL]
+disable=
+    missing-docstring,
+    too-few-public-methods,
+    no-self-use,
+    duplicate-code,
+    invalid-name
+    useless-option-value
+
+[FORMAT]
+max-line-length=88
+
+[BASIC]
+good-names=i,j,k,ex,Run,_

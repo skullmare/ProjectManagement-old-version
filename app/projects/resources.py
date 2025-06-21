@@ -1,34 +1,48 @@
-from import_export import resources, fields
-from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
-from .models import Project, ProjectMembership, Budget, Risk, Result, Task
 from django.contrib.auth import get_user_model
+from import_export import fields, resources
+
+from .models import Budget, Project, Task
 
 User = get_user_model()
 
+
 class ProjectResource(resources.ModelResource):
     # Кастомные поля
-    total_budget = fields.Field(column_name='total_budget', attribute='total_budget')
-    member_count = fields.Field(column_name='member_count', attribute='member_count')
-    task_count = fields.Field(column_name='task_count', attribute='task_count')
-    risk_count = fields.Field(column_name='risk_count', attribute='risk_count')
-    members = fields.Field(column_name='members', attribute='members')
-    tasks = fields.Field(column_name='tasks', attribute='tasks')
-    
+    total_budget = fields.Field(column_name="total_budget", attribute="total_budget")
+    member_count = fields.Field(column_name="member_count", attribute="member_count")
+    task_count = fields.Field(column_name="task_count", attribute="task_count")
+    risk_count = fields.Field(column_name="risk_count", attribute="risk_count")
+    members = fields.Field(column_name="members", attribute="members")
+    tasks = fields.Field(column_name="tasks", attribute="tasks")
+
     class Meta:
         model = Project
-        fields = ('id', 'name', 'client', 'curator', 'purpose', 'description', 
-                 'start_date', 'end_date', 'total_budget', 'member_count', 
-                 'task_count', 'risk_count', 'members', 'tasks')
+        fields = (
+            "id",
+            "name",
+            "client",
+            "curator",
+            "purpose",
+            "description",
+            "start_date",
+            "end_date",
+            "total_budget",
+            "member_count",
+            "task_count",
+            "risk_count",
+            "members",
+            "tasks",
+        )
         export_order = fields
         widgets = {
-            'start_date': {'format': '%d.%m.%Y'},
-            'end_date': {'format': '%d.%m.%Y'},
+            "start_date": {"format": "%d.%m.%Y"},
+            "end_date": {"format": "%d.%m.%Y"},
         }
 
     def get_export_queryset(self):
         """Кастомизация queryset для экспорта"""
         return self._meta.model.objects.all().prefetch_related(
-            'members', 'tasks', 'risks', 'budgets'
+            "members", "tasks", "risks", "budgets"
         )
 
     def dehydrate_total_budget(self, project):
@@ -80,18 +94,29 @@ class ProjectResource(resources.ModelResource):
 
 
 class TaskResource(resources.ModelResource):
-    project_name = fields.Field(column_name='project_name', attribute='project__name')
-    assigned_users = fields.Field(column_name='assigned_users', attribute='assigned_users')
-    duration = fields.Field(column_name='duration', attribute='duration')
-    
+    project_name = fields.Field(column_name="project_name", attribute="project__name")
+    assigned_users = fields.Field(
+        column_name="assigned_users", attribute="assigned_users"
+    )
+    duration = fields.Field(column_name="duration", attribute="duration")
+
     class Meta:
         model = Task
-        fields = ('id', 'name', 'project_name', 'description', 'start_date', 
-                 'end_date', 'status', 'assigned_users', 'duration')
+        fields = (
+            "id",
+            "name",
+            "project_name",
+            "description",
+            "start_date",
+            "end_date",
+            "status",
+            "assigned_users",
+            "duration",
+        )
         export_order = fields
         widgets = {
-            'start_date': {'format': '%d.%m.%Y'},
-            'end_date': {'format': '%d.%m.%Y'},
+            "start_date": {"format": "%d.%m.%Y"},
+            "end_date": {"format": "%d.%m.%Y"},
         }
 
     def dehydrate_assigned_users(self, task):
@@ -112,12 +137,14 @@ class TaskResource(resources.ModelResource):
 
 
 class BudgetResource(resources.ModelResource):
-    project_name = fields.Field(column_name='project_name', attribute='project__name')
-    formatted_amount = fields.Field(column_name='formatted_amount', attribute='formatted_amount')
-    
+    project_name = fields.Field(column_name="project_name", attribute="project__name")
+    formatted_amount = fields.Field(
+        column_name="formatted_amount", attribute="formatted_amount"
+    )
+
     class Meta:
         model = Budget
-        fields = ('id', 'project_name', 'year', 'amount', 'formatted_amount')
+        fields = ("id", "project_name", "year", "amount", "formatted_amount")
         export_order = fields
 
     def dehydrate_formatted_amount(self, budget):
@@ -126,4 +153,4 @@ class BudgetResource(resources.ModelResource):
 
     def get_formatted_amount(self, obj):
         """Альтернативный метод получения отформатированной суммы"""
-        return f"${obj.amount:,.2f}" 
+        return f"${obj.amount:,.2f}"

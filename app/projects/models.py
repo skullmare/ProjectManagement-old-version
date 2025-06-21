@@ -1,9 +1,11 @@
+from django.contrib.auth import \
+    get_user_model  # Импортируем функцию для получения модели пользователя
 from django.db import models
-from django.contrib.auth import get_user_model  # Импортируем функцию для получения модели пользователя
 from simple_history.models import HistoricalRecords  # Добавляем импорт
 
 # Получаем модель пользователя
 User = get_user_model()
+
 
 class Project(models.Model):
     name = models.CharField(max_length=100)
@@ -15,9 +17,9 @@ class Project(models.Model):
     end_date = models.DateField(blank=True, null=True)
     members = models.ManyToManyField(
         User,  # Используем непосредственно модель, а не строку
-        through='ProjectMembership',
-        through_fields=('project', 'user'),
-        related_name='projects'
+        through="ProjectMembership",
+        through_fields=("project", "user"),
+        related_name="projects",
     )
     history = HistoricalRecords()  # Добавляем отслеживание истории
 
@@ -31,37 +33,38 @@ class Project(models.Model):
 
 class ProjectMembership(models.Model):
     ROLE_CHOICES = [
-        ('leader', 'Руководитель'),
-        ('participant', 'Участник'),
+        ("leader", "Руководитель"),
+        ("participant", "Участник"),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)  # Используем модель User
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     role = models.CharField(max_length=12, choices=ROLE_CHOICES)
-    date_added = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Дата назначения"
-    )
+    date_added = models.DateTimeField(auto_now_add=True, verbose_name="Дата назначения")
     history = HistoricalRecords()  # Добавляем отслеживание истории
 
     class Meta:
-        unique_together = ('user', 'project')
+        unique_together = ("user", "project")
         verbose_name = "Доступ"
         verbose_name_plural = "Доступы"
 
     def __str__(self):
-        return f'{self.user} - {self.project} - {self.role}'
-    
+        return f"{self.user} - {self.project} - {self.role}"
 
 
 class Budget(models.Model):
-    project = models.ForeignKey(Project, related_name='budgets', on_delete=models.CASCADE)
+    project = models.ForeignKey(
+        Project, related_name="budgets", on_delete=models.CASCADE
+    )
     year = models.PositiveIntegerField()  # Поле для года
     amount = models.DecimalField(max_digits=10, decimal_places=2)  # Поле для бюджета
     history = HistoricalRecords()  # Добавляем отслеживание истории
 
     class Meta:
-        unique_together = ('project', 'year')  # Уникальное ограничение на сочетание проекта и года
+        unique_together = (
+            "project",
+            "year",
+        )  # Уникальное ограничение на сочетание проекта и года
         verbose_name = "Бюджет"  # единственное число
         verbose_name_plural = "Бюджеты"  # множественное число
 
@@ -70,7 +73,7 @@ class Budget(models.Model):
 
 
 class Risk(models.Model):
-    project = models.ForeignKey(Project, related_name='risks', on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, related_name="risks", on_delete=models.CASCADE)
     name = models.CharField(max_length=100)  # Название риска
     description = models.TextField()  # Описание риска
     history = HistoricalRecords()  # Добавляем отслеживание истории
@@ -78,55 +81,49 @@ class Risk(models.Model):
     class Meta:
         verbose_name = "Риск"  # единственное число
         verbose_name_plural = "Риски"  # множественное число
+
     def __str__(self):
         return self.name
 
 
 class Result(models.Model):
-    project = models.ForeignKey(Project, related_name='results', on_delete=models.CASCADE)
+    project = models.ForeignKey(
+        Project, related_name="results", on_delete=models.CASCADE
+    )
     text = models.TextField()  # Результат в виде текста
     history = HistoricalRecords()  # Добавляем отслеживание истории
 
     class Meta:
         verbose_name = "Результат"  # единственное число
         verbose_name_plural = "Результаты"  # множественное число
+
     def __str__(self):
         return f"Result for {self.project.name}"
 
 
 class Task(models.Model):
-    project = models.ForeignKey(Project, related_name='tasks', on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, related_name="tasks", on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
-    description = models.TextField(
-        blank=True, 
-        null=True,
-        verbose_name="Описание"
+    description = models.TextField(blank=True, null=True, verbose_name="Описание")
+    start_date = models.DateField(blank=True, null=True, verbose_name="Дата начала")
+    end_date = models.DateField(blank=True, null=True, verbose_name="Дата окончания")
+    status = models.CharField(
+        max_length=50,
+        choices=[
+            ("pending", "Pending"),
+            ("in_progress", "In Progress"),
+            ("completed", "Completed"),
+        ],
+        default="pending",
     )
-    start_date = models.DateField(
-        blank=True,
-        null=True,
-        verbose_name="Дата начала"
-    )
-    end_date = models.DateField(
-        blank=True,
-        null=True,
-        verbose_name="Дата окончания"
-    )
-    status = models.CharField(max_length=50, choices=[
-        ('pending', 'Pending'),
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
-    ], default='pending')
     assigned_users = models.ManyToManyField(
-        User,
-        related_name='tasks',
-        blank=True,
-        verbose_name="Назначенные пользователи"
+        User, related_name="tasks", blank=True, verbose_name="Назначенные пользователи"
     )
     history = HistoricalRecords()  # Добавляем отслеживание истории
 
     class Meta:
         verbose_name = "Задача"  # единственное число
         verbose_name_plural = "Задачи"  # множественное число
+
     def __str__(self):
         return self.name
